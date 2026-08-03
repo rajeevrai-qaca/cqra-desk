@@ -124,6 +124,10 @@ function renderReviewDetail() {
         <div class="review-photo-grid" id="photo-grid"></div>
       </div>
       <div class="card">
+        <div class="field" style="margin-bottom:8px;"><label>Auditor Observation</label></div>
+        <div class="ai-observation-box">${(review.auditorObservation || "No observation entered by Auditor.").replace(/</g, "&lt;")}</div>
+      </div>
+      <div class="card">
         <div class="field" style="margin-bottom:8px;"><label>AI Observation</label></div>
         <div class="ai-observation-box">${(review.aiObservation || "No observation available.").replace(/</g, "&lt;")}</div>
       </div>
