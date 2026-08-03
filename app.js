@@ -59,6 +59,7 @@ function renderLogin() {
         errEl.style.display = "block";
       }
     } catch (err) {
+      console.error("LOGIN ERROR:", err);
       errEl.textContent = "Could not reach the server. Check your connection and try again.";
       errEl.style.display = "block";
     } finally {
