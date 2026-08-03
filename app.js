@@ -69,46 +69,50 @@ function renderLogin() {
 }
 
 // ---------- Review List ----------
-async function attemptSync() {
-  updateSyncBar();
-  if (!navigator.onLine) return;
-  const queued = await dbGetAll("photos", "status", "queued");
-  for (const photo of queued) {
-    try {
-      const moduleKey = `${state.job.jobId}_${photo.moduleCode}`;
-      const savedModule = await dbGet("modules", moduleKey).catch(() => null);
-      const payload = {
-        photoId: photo.photoId,
-        jobId: state.job.jobId,
-        moduleCode: photo.moduleCode,
-        slotId: photo.slotId,
-        slotLabel: photo.slotLabel,
-        gps: photo.gps,
-        capturedAt: photo.capturedAt,
-        userRecordId: state.user.userRecordId,
-        auditorObservation: (savedModule && savedModule.auditorObservation) || "",
-        dataUrl: photo.dataUrl,
+async function renderReviewList() {
+  app.innerHTML = `
+    <header class="app-bar"><h1>${state.user.fullName}</h1><span class="app-wordmark">QACA</span></header>
+    <main>
+      <p class="note" id="reviews-status">Loading pending reviews…</p>
+      <div class="module-list" id="review-list"></div>
+    </main>
+    <footer class="company-footer"><span class="name">Quality Austria Central Asia Pvt. Ltd.</span></footer>
+  `;
+  try {
+    const res = await fetch(QTEL_CONFIG.ENDPOINTS.GET_PENDING_REVIEWS, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    const data = await res.json();
+    state.reviews = data.reviews || [];
+    document.getElementById("reviews-status").textContent = state.reviews.length
+      ? `${state.reviews.length} module(s) awaiting review. Tap one to open.`
+      : "No modules currently awaiting review.";
+    const listEl = document.getElementById("review-list");
+    state.reviews.forEach((review) => {
+      const flagClass = review.aiFlag === "Clear" ? "pass" : review.aiFlag === "Reject" ? "concern" : "in-progress";
+      const row = document.createElement("div");
+      row.className = "module-row";
+      row.innerHTML = `
+        <div class="info">
+          <div class="name">${review.moduleCode || "Module"}</div>
+          <div class="meta">${(review.photos || []).length} photo(s)</div>
+        </div>
+        <div class="pill ${flagClass}">${review.aiFlag || "Pending"}</div>
+      `;
+      row.onclick = () => {
+        state.currentReview = review;
+        state.selectedDecision = null;
+        currentView = "review-detail";
+        renderCurrentView();
       };
-      const res = await fetch(QTEL_CONFIG.ENDPOINTS.PHOTO_SUBMIT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (res.ok) {
-        photo.status = "submitted";
-        photo.submittedAt = new Date().toISOString();
-        await dbPut("photos", photo);
-      }
-    } catch (err) {
-      console.warn("Sync failed, will retry:", err.message);
-      break;
-    }
+      listEl.appendChild(row);
+    });
+  } catch (err) {
+    document.getElementById("reviews-status").textContent = "Could not load reviews. Check your connection and try again.";
   }
-  updateSyncBar();
-  renderCurrentView();
-}
-
-// ---------- Review Detail ----------
+}// ---------- Review Detail ----------
 function renderReviewDetail() {
   const review = state.currentReview;
   const photos = review.photos || [];
