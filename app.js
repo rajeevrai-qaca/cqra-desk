@@ -112,7 +112,9 @@ async function renderReviewList() {
   } catch (err) {
     document.getElementById("reviews-status").textContent = "Could not load reviews. Check your connection and try again.";
   }
-}// ---------- Review Detail ----------
+}
+
+// ---------- Review Detail ----------
 function renderReviewDetail() {
   const review = state.currentReview;
   const photos = review.photos || [];
