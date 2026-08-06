@@ -110,6 +110,7 @@ async function renderReviewList() {
       listEl.appendChild(row);
     });
   } catch (err) {
+    console.error("REVIEW LIST ERROR:", err);
     document.getElementById("reviews-status").textContent = "Could not load reviews. Check your connection and try again.";
   }
 }
