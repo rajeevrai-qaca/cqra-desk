@@ -218,9 +218,8 @@ function renderReviewDetail() {
 // the same uc?export=download pattern used throughout Q-Tel's photo pipeline.
 function toDirectDriveLink(link) {
   if (!link) return "";
-  if (link.includes("uc?export=download")) return link;
   const match = link.match(/[-\w]{25,}/);
-  return match ? `https://drive.google.com/uc?export=download&id=${match[0]}` : link;
+  return match ? `https://drive.google.com/thumbnail?id=${match[0]}&sz=w1000` : link;
 }
 
 // ---------- Issue NCR ----------
