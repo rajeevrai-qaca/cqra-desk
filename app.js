@@ -75,8 +75,7 @@ async function renderReviewList() {
     <header class="app-bar"><h1>${state.user.fullName}</h1><span class="app-wordmark">QACA</span></header>
     <main>
       <p class="note" id="reviews-status">Loading pending reviews…</p>
-      <div class="name">${review.moduleCode || "Module"} — ${review.siteId || ""}</div>
-<div class="meta" style="font-size:11px;">${review.auditJobId || ""} · ${review.aiCompleteTime ? new Date(review.aiCompleteTime).toLocaleString() : ""}</div>
+      <div class="module-list" id="review-list"></div>
     </main>
     <footer class="company-footer"><span class="name">Quality Austria Central Asia Pvt. Ltd.</span></footer>
   `;
@@ -97,10 +96,10 @@ async function renderReviewList() {
       const row = document.createElement("div");
       row.className = "module-row";
       row.innerHTML = `
-        state.user = { userRecordId: data.userRecordId, userId, fullName: data.fullName || userId };
-localStorage.setItem("cqra_user", JSON.stringify(state.user));
-currentView = "review-list";
-renderCurrentView();
+        <div class="info">
+          <div class="name">${review.moduleCode || "Module"} — ${review.siteId || ""}</div>
+          <div class="meta" style="font-size:11px;">${review.auditJobId || ""} · ${review.aiCompleteTime ? new Date(review.aiCompleteTime).toLocaleString() : ""}</div>
+        </div>
         <div class="pill ${flagClass}">${review.aiFlag || "Pending"}</div>
       `;
       row.onclick = () => {
@@ -116,7 +115,6 @@ renderCurrentView();
     document.getElementById("reviews-status").textContent = "Could not load reviews. Check your connection and try again.";
   }
 }
-
 // ---------- Review Detail ----------
 function renderReviewDetail() {
   const review = state.currentReview;
