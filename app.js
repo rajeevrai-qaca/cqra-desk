@@ -52,8 +52,9 @@ function renderLogin() {
       const data = await res.json();
       if (data.status === "success" || data.status === "otp_required") {
         state.user = { userRecordId: data.userRecordId, userId, fullName: data.fullName || userId };
-        currentView = "review-list";
-        renderCurrentView();
+      localStorage.setItem("cqra_user", JSON.stringify(state.user));
+      currentView = "review-list";
+      renderCurrentView();
       } else {
         errEl.textContent = data.message || "Login failed. Check your User ID and PIN.";
         errEl.style.display = "block";
@@ -74,7 +75,8 @@ async function renderReviewList() {
     <header class="app-bar"><h1>${state.user.fullName}</h1><span class="app-wordmark">QACA</span></header>
     <main>
       <p class="note" id="reviews-status">Loading pending reviews…</p>
-      <div class="module-list" id="review-list"></div>
+      <div class="name">${review.moduleCode || "Module"} — ${review.siteId || ""}</div>
+<div class="meta" style="font-size:11px;">${review.auditJobId || ""} · ${review.aiCompleteTime ? new Date(review.aiCompleteTime).toLocaleString() : ""}</div>
     </main>
     <footer class="company-footer"><span class="name">Quality Austria Central Asia Pvt. Ltd.</span></footer>
   `;
@@ -95,10 +97,10 @@ async function renderReviewList() {
       const row = document.createElement("div");
       row.className = "module-row";
       row.innerHTML = `
-        <div class="info">
-          <div class="name">${review.moduleCode || "Module"}</div>
-          <div class="meta">${(review.photos || []).length} photo(s)</div>
-        </div>
+        state.user = { userRecordId: data.userRecordId, userId, fullName: data.fullName || userId };
+localStorage.setItem("cqra_user", JSON.stringify(state.user));
+currentView = "review-list";
+renderCurrentView();
         <div class="pill ${flagClass}">${review.aiFlag || "Pending"}</div>
       `;
       row.onclick = () => {
@@ -294,4 +296,14 @@ function renderIssueNcr() {
 }
 
 // ---------- Boot ----------
+const savedUser = localStorage.getItem("cqra_user");
+if (savedUser) {
+  try {
+    state.user = JSON.parse(savedUser);
+    currentView = "review-list";
+  } catch (e) { currentView = "login"; }
+}
 renderCurrentView();
+setInterval(() => {
+  if (currentView === "review-list") renderReviewList();
+}, 30000);
