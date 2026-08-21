@@ -254,7 +254,8 @@ button.small { width: auto; padding: 8px 14px; font-size: 14px; }
 .review-photo-grid img {
   width: 100%;
   aspect-ratio: 1;
-  object-fit: cover;
+  object-fit: contain;
+  background: #000;
   border-radius: 8px;
   border: 1px solid var(--line);
 }
