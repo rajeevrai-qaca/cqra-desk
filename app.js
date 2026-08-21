@@ -293,6 +293,60 @@ function renderIssueNcr() {
   };
 }
 
+// ---------- Quiet background refresh (no full-page reload, no blinking) ----------
+async function refreshReviewListQuietly() {
+  if (currentView !== "review-list") return;
+  try {
+    const res = await fetch(QTEL_CONFIG.ENDPOINTS.GET_PENDING_REVIEWS, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    const data = await res.json();
+    state.reviews = data.reviews || [];
+    const statusEl = document.getElementById("reviews-status");
+    const listEl = document.getElementById("review-list");
+    if (!statusEl || !listEl) return;
+    statusEl.textContent = state.reviews.length
+      ? `${state.reviews.length} module(s) awaiting review. Tap one to open.`
+      : "No modules currently awaiting review.";
+    listEl.innerHTML = "";
+    state.reviews.forEach((review) => {
+      const flagClass = review.aiFlag === "Clear" ? "pass" : review.aiFlag === "Reject" ? "concern" : "in-progress";
+      const row = document.createElement("div");
+      row.className = "module-row";
+      row.innerHTML = `
+        <div class="info">
+          <div class="name">${review.moduleCode || "Module"} — ${review.siteId || ""}</div>
+          <div class="meta" style="font-size:11px;">${review.auditJobId || ""} · ${review.aiCompleteTime ? new Date(review.aiCompleteTime).toLocaleString() : ""}</div>
+        </div>
+        <div class="pill ${flagClass}">${review.aiFlag || "Pending"}</div>
+      `;
+      row.onclick = () => {
+        state.currentReview = review;
+        state.selectedDecision = null;
+        currentView = "review-detail";
+        renderCurrentView();
+      };
+      listEl.appendChild(row);
+    });
+  } catch (e) { /* silent — next tick retries */ }
+}
+
+// ---------- Session timeout ----------
+let lastActivity = Date.now();
+["click", "touchstart", "keydown"].forEach(evt =>
+  document.addEventListener(evt, () => { lastActivity = Date.now(); })
+);
+setInterval(() => {
+  if (state.user && Date.now() - lastActivity > 30 * 60 * 1000) {
+    localStorage.removeItem("cqra_user");
+    state.user = null;
+    currentView = "login";
+    renderCurrentView();
+  }
+}, 60000);
+
 // ---------- Boot ----------
 const savedUser = localStorage.getItem("cqra_user");
 if (savedUser) {
@@ -302,6 +356,4 @@ if (savedUser) {
   } catch (e) { currentView = "login"; }
 }
 renderCurrentView();
-setInterval(() => {
-  if (currentView === "review-list") renderReviewList();
-}, 30000);
+setInterval(refreshReviewListQuietly, 30000);
